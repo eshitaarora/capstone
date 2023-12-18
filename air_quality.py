@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -12,8 +11,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.optimize import differential_evolution
 
 class CNNModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1):
-        super(CNNModel, self).__init__()
+    def _init_(self, input_dim, hidden_dim, output_dim=1):
+        super(CNNModel, self)._init_()
         self.cnn = nn.Conv1d(in_channels=input_dim, out_channels=hidden_dim, kernel_size=3)
         self.relu = nn.ReLU()
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -25,8 +24,8 @@ class CNNModel(nn.Module):
         return x
 
 class GRUModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1):
-        super(GRUModel, self).__init__()
+    def _init_(self, input_dim, hidden_dim, output_dim=1):
+        super(GRUModel, self)._init_()
         self.gru = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim*2, output_dim)
     def forward(self, x):
@@ -35,8 +34,8 @@ class GRUModel(nn.Module):
         return x
 
 class LSTMModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim=1):
-        super(LSTMModel, self).__init__()
+    def _init_(self, input_dim, hidden_dim, output_dim=1):
+        super(LSTMModel, self)._init_()
         self.lstm = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim*2, output_dim)
     def forward(self, x):
@@ -97,21 +96,6 @@ def compute_metrics(true_values, predicted_values):
     r2 = r2_score(true_values, predicted_values)
     return mse, mae, rmse, r2
 
-def plot_actual_vs_predicted(actual, predicted):
-    plt.figure(figsize=(10, 6))
-    plt.plot(actual, label='Actual Values')
-    plt.plot(predicted, label='Predicted Values')
-    plt.title('Actual vs Predicted Values')
-    plt.xlabel('Sample')
-    plt.ylabel('Value')
-    plt.legend()
-    plt.grid(True)
-    st.pyplot(plt)
-
-def predict_next_30_days(model, last_30_days_data):
-    predictions = model(torch.tensor(last_30_days_data, dtype=torch.float32)).detach().numpy()
-    return predictions
-
 def train_ensemble_and_get_metrics(train_loader, val_loader):
     cnn_model = CNNModel(input_dim=train_loader.dataset.tensors[0].shape[2], hidden_dim=50)
     gru_model = GRUModel(input_dim=train_loader.dataset.tensors[0].shape[2], hidden_dim=50)
@@ -122,7 +106,6 @@ def train_ensemble_and_get_metrics(train_loader, val_loader):
     for model, optimizer in zip(models, optimizers):
         train_model(model, train_loader, optimizer, criterion)
     optimal_weights = optimize_weights(models, train_loader, val_loader)
-    
     ensemble_predictions = []
     all_true_values = []
     with torch.no_grad():
@@ -131,22 +114,17 @@ def train_ensemble_and_get_metrics(train_loader, val_loader):
             weighted_predictions = np.tensordot(optimal_weights, batch_predictions, axes=([0],[0]))
             ensemble_predictions.extend(weighted_predictions)
             all_true_values.extend(y_batch.numpy())
-    
-    return all_true_values, ensemble_predictions, compute_metrics(all_true_values, ensemble_predictions)
+    return compute_metrics(all_true_values, ensemble_predictions)
 
 st.title('Air Quality Prediction using Ensemble Models')
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
-    df = df.drop(columns=['From Date', 'To Date'])
-    df = df.apply(pd.to_numeric, errors='coerce')
-    df = df.dropna()
-    target_pollutant = st.selectbox('Select Target Pollutant', df.columns)
-
+    gatrain_df = pd.read_csv(uploaded_file)
+    gatrain_df = gatrain_df.drop(columns=['From Date', 'To Date'])
+    gatrain_df = gatrain_df.apply(pd.to_numeric, errors='coerce')
+    gatrain_df = gatrain_df.dropna()
+    target_pollutant = st.selectbox('Select Target Pollutant', gatrain_df.columns)
     if st.button('Train and Evaluate Models'):
-        train_loader, val_loader, scaler_X, scaler_y = preprocess_data(df, target_pollutant)
-        actual, predicted, ensemble_results = train_ensemble_and_get_metrics(train_loader, val_loader)
-        
+        train_loader, val_loader, scaler_X, scaler_y = preprocess_data(gatrain_df, target_pollutant)
+        ensemble_results = train_ensemble_and_get_metrics(train_loader, val_loader)
         st.write(pd.DataFrame({'Ensemble': ensemble_results}, index=['MSE', 'MAE', 'RMSE', 'R2']))
-        plot_actual_vs_predicted(actual, predicted)

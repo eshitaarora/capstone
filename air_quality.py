@@ -97,6 +97,21 @@ def compute_metrics(true_values, predicted_values):
     r2 = r2_score(true_values, predicted_values)
     return mse, mae, rmse, r2
 
+def plot_actual_vs_predicted(actual, predicted):
+    plt.figure(figsize=(10, 6))
+    plt.plot(actual, label='Actual Values')
+    plt.plot(predicted, label='Predicted Values')
+    plt.title('Actual vs Predicted Values')
+    plt.xlabel('Sample')
+    plt.ylabel('Value')
+    plt.legend()
+    plt.grid(True)
+    st.pyplot(plt)
+
+def predict_next_30_days(model, last_30_days_data):
+    predictions = model(torch.tensor(last_30_days_data, dtype=torch.float32)).detach().numpy()
+    return predictions
+
 def train_ensemble_and_get_metrics(train_loader, val_loader):
     cnn_model = CNNModel(input_dim=train_loader.dataset.tensors[0].shape[2], hidden_dim=50)
     gru_model = GRUModel(input_dim=train_loader.dataset.tensors[0].shape[2], hidden_dim=50)
@@ -107,6 +122,7 @@ def train_ensemble_and_get_metrics(train_loader, val_loader):
     for model, optimizer in zip(models, optimizers):
         train_model(model, train_loader, optimizer, criterion)
     optimal_weights = optimize_weights(models, train_loader, val_loader)
+    
     ensemble_predictions = []
     all_true_values = []
     with torch.no_grad():
@@ -115,26 +131,22 @@ def train_ensemble_and_get_metrics(train_loader, val_loader):
             weighted_predictions = np.tensordot(optimal_weights, batch_predictions, axes=([0],[0]))
             ensemble_predictions.extend(weighted_predictions)
             all_true_values.extend(y_batch.numpy())
-    plt.figure(figsize=(10, 6))
-    plt.plot(actual, label='Actual Values')
-    plt.plot(predicted, label='Predicted Values')
-    plt.title('Actual vs Predicted Values')
-    plt.xlabel('Sample')
-    plt.ylabel('Value')
-    plt.legend()
-    plt.grid(True)
-    st.pyplot(plt)
-    return compute_metrics(all_true_values, ensemble_predictions)
+    
+    return all_true_values, ensemble_predictions, compute_metrics(all_true_values, ensemble_predictions)
 
 st.title('Air Quality Prediction using Ensemble Models')
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+
 if uploaded_file is not None:
-    gatrain_df = pd.read_csv(uploaded_file)
-    gatrain_df = gatrain_df.drop(columns=['From Date', 'To Date'])
-    gatrain_df = gatrain_df.apply(pd.to_numeric, errors='coerce')
-    gatrain_df = gatrain_df.dropna()
-    target_pollutant = st.selectbox('Select Target Pollutant', gatrain_df.columns)
+    df = pd.read_csv(uploaded_file)
+    df = df.drop(columns=['From Date', 'To Date'])
+    df = df.apply(pd.to_numeric, errors='coerce')
+    df = df.dropna()
+    target_pollutant = st.selectbox('Select Target Pollutant', df.columns)
+
     if st.button('Train and Evaluate Models'):
-        train_loader, val_loader, scaler_X, scaler_y = preprocess_data(gatrain_df, target_pollutant)
-        ensemble_results = train_ensemble_and_get_metrics(train_loader, val_loader)
+        train_loader, val_loader, scaler_X, scaler_y = preprocess_data(df, target_pollutant)
+        actual, predicted, ensemble_results = train_ensemble_and_get_metrics(train_loader, val_loader)
+        
         st.write(pd.DataFrame({'Ensemble': ensemble_results}, index=['MSE', 'MAE', 'RMSE', 'R2']))
+        plot_actual_vs_predicted(actual, predicted)

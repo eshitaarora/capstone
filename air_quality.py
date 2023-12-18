@@ -1,4 +1,4 @@
-pip install streamlit pandas numpy torch matplotlib scikit-learn
+!pip install streamlit pandas numpy torch matplotlib scikit-learn
 
 import streamlit as st
 import pandas as pd

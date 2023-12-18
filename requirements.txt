@@ -1,5 +1,11 @@
-altair
 numpy
 pandas
 pydeck
 streamlit
+torch
+torch.nn
+torch.optim
+torch.utils.data
+sklearn
+scipy
+

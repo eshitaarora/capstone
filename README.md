@@ -63,5 +63,3 @@ Contributions, issues, and feature requests are welcome. Feel free to check [iss
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
-
-Remember to replace placeholders like `<link-to-your-issues-page>` with actual links relevant to your project. Also, ensure the "Data Format" section accurately reflects the format of the CSV file your application expects.

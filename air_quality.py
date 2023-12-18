@@ -11,8 +11,8 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.optimize import differential_evolution
 
 class CNNModel(nn.Module):
-    def _init_(self, input_dim, hidden_dim, output_dim=1):
-        super(CNNModel, self)._init_()
+    def __init__(self, input_dim, hidden_dim, output_dim=1):
+        super(CNNModel, self).__init__()
         self.cnn = nn.Conv1d(in_channels=input_dim, out_channels=hidden_dim, kernel_size=3)
         self.relu = nn.ReLU()
         self.fc = nn.Linear(hidden_dim, output_dim)
@@ -24,8 +24,8 @@ class CNNModel(nn.Module):
         return x
 
 class GRUModel(nn.Module):
-    def _init_(self, input_dim, hidden_dim, output_dim=1):
-        super(GRUModel, self)._init_()
+    def __init__(self, input_dim, hidden_dim, output_dim=1):
+        super(GRUModel, self).__init__()
         self.gru = nn.GRU(input_size=input_dim, hidden_size=hidden_dim, batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim*2, output_dim)
     def forward(self, x):
@@ -34,8 +34,8 @@ class GRUModel(nn.Module):
         return x
 
 class LSTMModel(nn.Module):
-    def _init_(self, input_dim, hidden_dim, output_dim=1):
-        super(LSTMModel, self)._init_()
+    def __init__(self, input_dim, hidden_dim, output_dim=1):
+        super(LSTMModel, self).__init__()
         self.lstm = nn.LSTM(input_size=input_dim, hidden_size=hidden_dim, batch_first=True, bidirectional=True)
         self.fc = nn.Linear(hidden_dim*2, output_dim)
     def forward(self, x):

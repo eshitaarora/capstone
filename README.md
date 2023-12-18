@@ -1,5 +1,3 @@
-Sure, here's a sample README file for your GitHub repository that describes the Streamlit application for air quality prediction using ensemble models. You can adjust the content as per your specific project details:
-
 ---
 
 # Air Quality Prediction using Ensemble Models

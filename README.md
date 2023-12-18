@@ -1,6 +1,6 @@
 ---
 
-# Air Quality Prediction using Ensemble Models
+# Air Quality Concentration Prediction using Ensemble Models
 
 This repository contains a Streamlit application designed to predict air quality using ensemble machine learning models, including CNN, GRU, and LSTM. The application allows users to upload a dataset, select a target pollutant, and view the results of the prediction alongside actual values.
 
@@ -25,7 +25,7 @@ pip install -r requirements.txt
 Launch the application by running:
 
 ```bash
-streamlit run app.py
+streamlit run air_quality.py
 ```
 
 ## Usage
